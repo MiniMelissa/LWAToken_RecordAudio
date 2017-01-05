@@ -1,9 +1,7 @@
 package com.example.xumeng.lwatoken;
 
 import android.app.Activity;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -37,9 +35,7 @@ public class MainActivity extends Activity {
     private static final String PRODUCT_ID = "LWAToken";
     private static final String PRODUCT_DSN = "123456";
     private static final Scope ALEXA_ALL_SCOPE=ScopeFactory.scopeNamed("alexa:all");
-//    private Scope ALEXA_ALL_SCOPE=ScopeFactory.scopeNamed("alexa:all");
 
-//    private Config accessTokenConfig;
     public String accessToken;
 
     private TextView textContent;
@@ -47,7 +43,6 @@ public class MainActivity extends Activity {
     private ProgressBar loginProgress;
     private boolean isLoggedIn;
 
-    private ProvisioningClient mProvisioningClient;
 
 
     @Override
@@ -57,15 +52,6 @@ public class MainActivity extends Activity {
 
         mRequestContext=RequestContext.create(this);
         mRequestContext.registerListener(new AuthorizeListenerImpl());
-
-//        try {
-//            mProvisioningClient = new ProvisioningClient(this);
-//        } catch(Exception e) {
-//            connectErrorState();
-//            showAlertDialog(e);
-//            Log.e(TAG, "Unable to use Provisioning Client. CA Certificate is incorrect or does not exist.", e);
-//        }
-
 
 
         // Find the button with the login_with_amazon ID
@@ -100,7 +86,6 @@ public class MainActivity extends Activity {
 
 
 
-
         // Find the button with the logout ID and set up a click handler
         View logoutButton=findViewById(R.id.logout);
         logoutButton.setOnClickListener(new View.OnClickListener(){
@@ -132,134 +117,9 @@ public class MainActivity extends Activity {
         loggoutTextView.setText(logoutText);
         loginProgress=(ProgressBar)findViewById(R.id.log_in_progress);
 
-//        initializeUI();
-
-    }
-
-    private void initializeUI(){
-        // Find the button with the login_with_amazon ID
-        // and set up a click handler
-        mLoginButton =  findViewById(R.id.login_with_amazon);
-        mLoginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                doLogin();
-                getAccessToken();
-                textContent.setText(accessToken);
-            }
-        });
-
-        // Find the button with the logout ID and set up a click handler
-        View logoutButton=findViewById(R.id.logout);
-        logoutButton.setOnClickListener(new View.OnClickListener(){
-
-            @Override
-            public void onClick(View view) {
-                AuthorizationManager.signOut(getApplicationContext(), new Listener<Void, AuthError>() {
-                    @Override
-                    public void onSuccess(Void response) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                setLoggedOutState();
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onError(AuthError authError) {
-                        Log.e(Tag,"Error clearing authorizaiton state.",authError);
-                    }
-                });
-            }
-        });
-
-        String logoutText="Logout";
-        textContent=(TextView) findViewById(R.id.hint_info);
-        loggoutTextView=(TextView)logoutButton;
-        loggoutTextView.setText(logoutText);
-        loginProgress=(ProgressBar)findViewById(R.id.log_in_progress);
-    }
-
-    private void doLogin() {
-        final JSONObject scopeData = new JSONObject();
-        final JSONObject productInstanceAttributes = new JSONObject();
-
-        try {
-//            scopeData.put("productId", PRODUCT_ID);
-            productInstanceAttributes.put("deviceSerialNumber", PRODUCT_DSN);
-            scopeData.put("productInstanceAttributes", productInstanceAttributes);
-            scopeData.put("productId", PRODUCT_ID);
-
-//            ALEXA_ALL_SCOPE = ScopeFactory.scopeNamed("alexa:all",scopeData);
-
-            AuthorizationManager.authorize(new AuthorizeRequest.Builder(mRequestContext)
-                    .addScope(ScopeFactory.scopeNamed("alexa:all",scopeData))
-                    .forGrantType(AuthorizeRequest.GrantType.ACCESS_TOKEN)
-                    .shouldReturnUserData(false)
-                    .build());
-
-//            AuthorizationManager.getToken(this, new Scope[]{ALEXA_ALL_SCOPE}, new TokenListener() {
-//                @Override
-//                public void onSuccess(AuthorizeResult authorizeResult) {
-//
-//                            // Get the access token
-//                            accessToken = authorizeResult.getAccessToken();
-//                            boolean isLoggedIn = !TextUtils.isEmpty(accessToken);
-//
-//
-//                }
-//
-//                @Override
-//                public void onError(AuthError authError) {
-//
-//                }
-//            });
-
-
-//            AuthorizationManager.getToken(this,new Scope[] {ScopeFactory.scopeNamed("alexa:all"),new TokenListener()});
-        } catch (JSONException e) {
-            // handle exception here
-            e.printStackTrace();
-        }
-
-//        mRequestContext.registerListener(new AuthorizeListener() {
-//            @Override
-//            public void onSuccess(AuthorizeResult authorizeResult) {
-//                AuthorizationManager.getToken(this, new Scope[] { ScopeFactory.scopeNamed("alexa:all") }, new TokenListener());
-//            }
-//
-//            @Override
-//            public void onError(AuthError authError) {
-//
-//            }
-//
-//            @Override
-//            public void onCancel(AuthCancellation authCancellation) {
-//
-//            }
-//        });
-
     }
 
 
-    private void getAccessToken() {
-        AuthorizationManager.getToken(this, new Scope[] { ALEXA_ALL_SCOPE}, new  TokenListener(){
-            @Override
-            public void onSuccess(AuthorizeResult authorizeResult) { // Give the below access token to your AVS code
-
-                accessToken = authorizeResult.getAccessToken();
-                authorizeResult.getAccessToken();
-                boolean isLoggedIn = !TextUtils.isEmpty(accessToken);
-            }
-
-            @Override
-            public void onError(AuthError ae) {
-                // Logged out
-            }
-
-        });
-    }
 
     private void showAuthToast(String authToastMessage){
         Toast authToast = Toast.makeText(getApplicationContext(),authToastMessage,Toast.LENGTH_LONG);
@@ -337,51 +197,14 @@ public class MainActivity extends Activity {
         public void onSuccess(AuthorizeResult authorizeResult) {
             accessToken=authorizeResult.getAccessToken();
 
-//            final AppProvisioningInfo companionProvisioningInfo = new AppProvisioningInfo(accessToken);
 
-
-            new AsyncTask<Void, Void, Void>() {
-                private Exception errorInBackground;
-
+            runOnUiThread(new Runnable() {
                 @Override
-                protected void onPreExecute() {
-                    super.onPreExecute();
-//                    loginInProgressState();
+                public void run() {
                     setLoggingInState(true);
-                }
 
-                @Override
-                protected Void doInBackground(Void... voids) {
-                    try {
-//                        mProvisioningClient.postCompanionProvisioningInfo(companionProvisioningInfo);
-                    } catch (Exception e) {
-                        errorInBackground = e;
-                    }
-                    return null;
                 }
-
-                @Override
-                protected void onPostExecute(Void result) {
-                    super.onPostExecute(result);
-                    if (errorInBackground != null) {
-//                        connectCleanState();
-//                        showAlertDialog(errorInBackground);
-                    } else {
-//                        loginSuccessState();
-                        setLoggedInState();
-                    }
-                }
-            }.execute();
-//            runOnUiThread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    setLoggingInState(true);
-//
-//                }
-//            });
-            //used to change the text content after loggin successfully
-//                fetchUserProfile();
-//                 textContent.setText(accessToken);
+            });
         }
 
         /* There was an error during the attempt to authorize the application. */
@@ -425,9 +248,5 @@ public class MainActivity extends Activity {
         public void onError(AuthError authError) {
         }
     }
-
-
-
-
 
 }
