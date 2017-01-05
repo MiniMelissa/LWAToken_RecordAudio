@@ -1,1 +1,1 @@
-include ':app', ':login-with-amazon-sdk'
+include ':app', ':login-with-amazon-sdk', ':commons-io-2.5', ':commons-io-2.4'

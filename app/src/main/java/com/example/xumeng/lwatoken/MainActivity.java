@@ -1,6 +1,7 @@
 package com.example.xumeng.lwatoken;
 
 import android.app.Activity;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -46,6 +47,8 @@ public class MainActivity extends Activity {
     private ProgressBar loginProgress;
     private boolean isLoggedIn;
 
+    private ProvisioningClient mProvisioningClient;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +57,16 @@ public class MainActivity extends Activity {
 
         mRequestContext=RequestContext.create(this);
         mRequestContext.registerListener(new AuthorizeListenerImpl());
+
+//        try {
+//            mProvisioningClient = new ProvisioningClient(this);
+//        } catch(Exception e) {
+//            connectErrorState();
+//            showAlertDialog(e);
+//            Log.e(TAG, "Unable to use Provisioning Client. CA Certificate is incorrect or does not exist.", e);
+//        }
+
+
 
         // Find the button with the login_with_amazon ID
         // and set up a click handler
@@ -322,14 +335,50 @@ public class MainActivity extends Activity {
     public class AuthorizeListenerImpl extends AuthorizeListener{
         @Override
         public void onSuccess(AuthorizeResult authorizeResult) {
+            accessToken=authorizeResult.getAccessToken();
 
-            runOnUiThread(new Runnable() {
+//            final AppProvisioningInfo companionProvisioningInfo = new AppProvisioningInfo(accessToken);
+
+
+            new AsyncTask<Void, Void, Void>() {
+                private Exception errorInBackground;
+
                 @Override
-                public void run() {
+                protected void onPreExecute() {
+                    super.onPreExecute();
+//                    loginInProgressState();
                     setLoggingInState(true);
-
                 }
-            });
+
+                @Override
+                protected Void doInBackground(Void... voids) {
+                    try {
+//                        mProvisioningClient.postCompanionProvisioningInfo(companionProvisioningInfo);
+                    } catch (Exception e) {
+                        errorInBackground = e;
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void onPostExecute(Void result) {
+                    super.onPostExecute(result);
+                    if (errorInBackground != null) {
+//                        connectCleanState();
+//                        showAlertDialog(errorInBackground);
+                    } else {
+//                        loginSuccessState();
+                        setLoggedInState();
+                    }
+                }
+            }.execute();
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    setLoggingInState(true);
+//
+//                }
+//            });
             //used to change the text content after loggin successfully
 //                fetchUserProfile();
 //                 textContent.setText(accessToken);

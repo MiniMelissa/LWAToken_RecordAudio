@@ -24,4 +24,5 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:25.0.0'
     compile files('libs/login-with-amazon-sdk.jar')
+    compile files('libs/commons-io-2.4.jar')
 }
