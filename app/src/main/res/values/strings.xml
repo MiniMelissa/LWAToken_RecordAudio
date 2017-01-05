@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">LWAToken</string>
+    <string name="Welcome">Welcome to Melexa!</string>
+    <string name="loginAmazonFirst">Log in with Amazon account to use Alexa!</string>
+    <string name="logout">Logout</string>
+    <string name="login_success">Congratulation! You login successfully!</string>
+    <string name="return_to_app">Return to App!</string>
+</resources>
