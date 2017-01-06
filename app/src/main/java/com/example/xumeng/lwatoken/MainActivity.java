@@ -2,6 +2,7 @@ package com.example.xumeng.lwatoken;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -24,17 +25,15 @@ import com.amazon.identity.auth.device.api.workflow.RequestContext;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-
-
 public class MainActivity extends Activity {
-
     private static final String Tag= MainActivity.class.getName();
 
     private RequestContext mRequestContext;
     private View mLoginButton;
     private static final String PRODUCT_ID = "LWAToken";
     private static final String PRODUCT_DSN = "123456";
-    private static final Scope ALEXA_ALL_SCOPE=ScopeFactory.scopeNamed("alexa:all");
+    //    private static final Scope ALEXA_ALL_SCOPE=ScopeFactory.scopeNamed("alexa:all");
+    private Scope ALEXA_ALL_SCOPE= ScopeFactory.scopeNamed("alexa:all");
 
     public String accessToken;
 
@@ -43,48 +42,66 @@ public class MainActivity extends Activity {
     private ProgressBar loginProgress;
     private boolean isLoggedIn;
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
         mRequestContext=RequestContext.create(this);
-        mRequestContext.registerListener(new AuthorizeListenerImpl());
+        mRequestContext.registerListener(new AuthorizeListener(){
+            @Override
+            public void onSuccess(AuthorizeResult authorizeResult) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        setLoggingInState(true);
+                    }
+                });
+                textContent.setText(accessToken);
+            }
 
+            /* There was an error during the attempt to authorize the application. */
+            @Override
+            public void onError(final AuthError authError) {
+                Log.e(Tag,"Error when authorizing", authError);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        showAuthToast("Error when authorizing.Please try again.");
+                        resetTextCotent();
+                        setLoggingInState(false);
+                    }
+                });
+            }
 
+            /* Authorization was cancelled before it could be completed. */
+            @Override
+            public void onCancel(final AuthCancellation authCancellation) {
+                Log.e(Tag,"User cancelled authorization");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        showAuthToast("Authorization cancelled");
+                        resetTextCotent();
+                    }
+                });
+            }
+        });
+
+        setContentView(R.layout.activity_main);
+        initializeUI();
+
+    }
+
+    private void initializeUI(){
         // Find the button with the login_with_amazon ID
         // and set up a click handler
         mLoginButton =  findViewById(R.id.login_with_amazon);
         mLoginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                doLogin();
-                final JSONObject scopeData = new JSONObject();
-                final JSONObject productInstanceAttributes = new JSONObject();
-
-                try {
-                    productInstanceAttributes.put("deviceSerialNumber", PRODUCT_DSN);
-                    scopeData.put("productInstanceAttributes", productInstanceAttributes);
-                    scopeData.put("productId", PRODUCT_ID);
-
-
-                    AuthorizationManager.authorize(new AuthorizeRequest.Builder(mRequestContext)
-                            .addScope(ScopeFactory.scopeNamed("alexa:all",scopeData))
-                            .forGrantType(AuthorizeRequest.GrantType.ACCESS_TOKEN)
-                            .shouldReturnUserData(false)
-                            .build());
-                } catch (JSONException e) {
-                    // handle exception here
-                    e.printStackTrace();
-                }
-//                getAccessToken();
-                textContent.setText(accessToken);
+                doLogin();
             }
         });
-
-
 
         // Find the button with the logout ID and set up a click handler
         View logoutButton=findViewById(R.id.logout);
@@ -116,10 +133,49 @@ public class MainActivity extends Activity {
         loggoutTextView=(TextView)logoutButton;
         loggoutTextView.setText(logoutText);
         loginProgress=(ProgressBar)findViewById(R.id.log_in_progress);
+    }
 
+    private void doLogin() {
+        final JSONObject scopeData = new JSONObject();
+        final JSONObject productInstanceAttributes = new JSONObject();
+
+        try {
+            productInstanceAttributes.put("deviceSerialNumber", PRODUCT_DSN);
+            scopeData.put("productInstanceAttributes", productInstanceAttributes);
+            scopeData.put("productId", PRODUCT_ID);
+
+            AuthorizationManager.authorize(new AuthorizeRequest.Builder(mRequestContext)
+                    .addScope(ScopeFactory.scopeNamed("alexa:all", scopeData))
+                    .forGrantType(AuthorizeRequest.GrantType.ACCESS_TOKEN)
+                    .shouldReturnUserData(false)
+                    .build());
+
+            ALEXA_ALL_SCOPE = ScopeFactory.scopeNamed("alexa:all",scopeData);
+
+        } catch (JSONException e) {
+            // handle exception here
+            e.printStackTrace();
+        }
+        getAccessToken();
     }
 
 
+    private void getAccessToken() {
+        AuthorizationManager.getToken(this, new Scope[] { ALEXA_ALL_SCOPE }, new  TokenListener(){
+            @Override
+            public void onSuccess(AuthorizeResult authorizeResult) { // Give the below access token to your AVS code
+
+                accessToken = authorizeResult.getAccessToken();
+                boolean isLoggedIn = !TextUtils.isEmpty(accessToken);
+            }
+
+            @Override
+            public void onError(AuthError ae) {
+                // Logged out
+            }
+
+        });
+    }
 
     private void showAuthToast(String authToastMessage){
         Toast authToast = Toast.makeText(getApplicationContext(),authToastMessage,Toast.LENGTH_LONG);
@@ -136,7 +192,24 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart(){
         super.onStart();
-        AuthorizationManager.getToken(this, new Scope[] { ScopeFactory.scopeNamed("alexa:all") }, new TokenListener());
+        AuthorizationManager.getToken(this, new Scope[] { ALEXA_ALL_SCOPE }, new Listener<AuthorizeResult, AuthError>() {
+            @Override
+            public void onSuccess(AuthorizeResult result) {
+                if(result.getAccessToken()!=null){
+                    textContent.setText(accessToken);
+                    /* The user is signed in */
+
+                }else{
+
+                }
+            }
+
+            @Override
+            public void onError(AuthError authError) {
+                    /* The user is not signed in */
+
+            }
+        });
     }
 
     /**
@@ -190,57 +263,10 @@ public class MainActivity extends Activity {
             loginProgress.setVisibility(ProgressBar.GONE);
         }
     }
-
-
-    public class AuthorizeListenerImpl extends AuthorizeListener{
-        @Override
-        public void onSuccess(AuthorizeResult authorizeResult) {
-            accessToken=authorizeResult.getAccessToken();
-
-
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    setLoggingInState(true);
-
-                }
-            });
-        }
-
-        /* There was an error during the attempt to authorize the application. */
-        @Override
-        public void onError(final AuthError authError) {
-            Log.e(Tag,"Error when authorizing", authError);
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    showAuthToast("Error when authorizing.Please try again.");
-                    resetTextCotent();
-                    setLoggingInState(false);
-                }
-            });
-        }
-
-        /* Authorization was cancelled before it could be completed. */
-        @Override
-        public void onCancel(final AuthCancellation authCancellation) {
-            Log.e(Tag,"User cancelled authorization");
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    showAuthToast("Authorization cancelled");
-                    resetTextCotent();
-                }
-            });
-        }
-    }
-
     public class TokenListener implements Listener<AuthorizeResult, AuthError> {
         /* getToken completed successfully. */
         @Override
         public void onSuccess(AuthorizeResult authorizeResult) {
-             accessToken = authorizeResult.getAccessToken();
-
         }
 
         /* There was an error during the attempt to get the token. */
@@ -248,5 +274,4 @@ public class MainActivity extends Activity {
         public void onError(AuthError authError) {
         }
     }
-
 }
