@@ -5,4 +5,7 @@
     <string name="logout">Logout</string>
     <string name="login_success">Congratulation! You login successfully!</string>
     <string name="return_to_app">Return to App!</string>
+    <string name="Listen">Listening</string>
+    <string name="Process">Processing</string>
+    <string name="Responce">Responcing</string>
 </resources>

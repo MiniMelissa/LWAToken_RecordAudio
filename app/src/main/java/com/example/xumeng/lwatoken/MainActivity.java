@@ -1,6 +1,7 @@
 package com.example.xumeng.lwatoken;
 
 import android.app.Activity;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -47,45 +48,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         mRequestContext=RequestContext.create(this);
-        mRequestContext.registerListener(new AuthorizeListener(){
-            @Override
-            public void onSuccess(AuthorizeResult authorizeResult) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        setLoggingInState(true);
-                    }
-                });
-                textContent.setText(accessToken);
-            }
-
-            /* There was an error during the attempt to authorize the application. */
-            @Override
-            public void onError(final AuthError authError) {
-                Log.e(Tag,"Error when authorizing", authError);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        showAuthToast("Error when authorizing.Please try again.");
-                        resetTextCotent();
-                        setLoggingInState(false);
-                    }
-                });
-            }
-
-            /* Authorization was cancelled before it could be completed. */
-            @Override
-            public void onCancel(final AuthCancellation authCancellation) {
-                Log.e(Tag,"User cancelled authorization");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        showAuthToast("Authorization cancelled");
-                        resetTextCotent();
-                    }
-                });
-            }
-        });
+        mRequestContext.registerListener(new AuthorizeListenerImpl());
 
         setContentView(R.layout.activity_main);
         initializeUI();
@@ -99,6 +62,7 @@ public class MainActivity extends Activity {
         mLoginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 doLogin();
             }
         });
@@ -142,7 +106,7 @@ public class MainActivity extends Activity {
         try {
             productInstanceAttributes.put("deviceSerialNumber", PRODUCT_DSN);
             scopeData.put("productInstanceAttributes", productInstanceAttributes);
-            scopeData.put("productId", PRODUCT_ID);
+            scopeData.put("productID", PRODUCT_ID);
 
             AuthorizationManager.authorize(new AuthorizeRequest.Builder(mRequestContext)
                     .addScope(ScopeFactory.scopeNamed("alexa:all", scopeData))
@@ -156,7 +120,7 @@ public class MainActivity extends Activity {
             // handle exception here
             e.printStackTrace();
         }
-        getAccessToken();
+//        getAccessToken();
     }
 
 
@@ -164,8 +128,7 @@ public class MainActivity extends Activity {
         AuthorizationManager.getToken(this, new Scope[] { ALEXA_ALL_SCOPE }, new  TokenListener(){
             @Override
             public void onSuccess(AuthorizeResult authorizeResult) { // Give the below access token to your AVS code
-
-                accessToken = authorizeResult.getAccessToken();
+                 accessToken = authorizeResult.getAccessToken();
                 boolean isLoggedIn = !TextUtils.isEmpty(accessToken);
             }
 
@@ -196,7 +159,15 @@ public class MainActivity extends Activity {
             @Override
             public void onSuccess(AuthorizeResult result) {
                 if(result.getAccessToken()!=null){
-                    textContent.setText(accessToken);
+//                    getAccessToken();
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            // Get the access token
+//                            textContent.setText(accessToken);
+                            getAccessToken();
+                        }
+                    });
+
                     /* The user is signed in */
 
                 }else{
@@ -272,6 +243,81 @@ public class MainActivity extends Activity {
         /* There was an error during the attempt to get the token. */
         @Override
         public void onError(AuthError authError) {
+        }
+    }
+
+    public class AuthorizeListenerImpl extends AuthorizeListener{
+        @Override
+        public void onSuccess(AuthorizeResult authorizeResult) {
+
+            getAccessToken();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+
+                    new AsyncTask<Void, Void, Void>() {
+                        private Exception errorInBackground;
+
+                        @Override
+                        protected void onPreExecute() {
+                            super.onPreExecute();
+            //                    loginInProgressState();
+                            setLoggingInState(true);
+
+                        }
+
+                        @Override
+                        protected Void doInBackground(Void... voids) {
+                            try {
+                            } catch (Exception e) {
+                                errorInBackground = e;
+                            }
+                            return null;
+                        }
+
+                        @Override
+                        protected void onPostExecute(Void result) {
+                            super.onPostExecute(result);
+                            if (errorInBackground != null) {
+            //                        connectCleanState();
+            //                        showAlertDialog(errorInBackground);
+                            } else {
+            //                        loginSuccessState();
+                                setLoggedInState();
+                            }
+                        }
+                    }.execute();
+                }
+            });
+//            textContent.setText("access token");
+
+        }
+
+        /* There was an error during the attempt to authorize the application. */
+        @Override
+        public void onError(final AuthError authError) {
+            Log.e(Tag,"Error when authorizing", authError);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    showAuthToast("Error when authorizing.Please try again.");
+                    resetTextCotent();
+                    setLoggingInState(false);
+                }
+            });
+        }
+
+        /* Authorization was cancelled before it could be completed. */
+        @Override
+        public void onCancel(final AuthCancellation authCancellation) {
+            Log.e(Tag,"User cancelled authorization");
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    showAuthToast("Authorization cancelled");
+                    resetTextCotent();
+                }
+            });
         }
     }
 }
