@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_marginLeft="10dp"
-        android:layout_marginTop="100dp"
+        android:layout_marginTop="50dp"
         >
         <ProgressBar
             android:id="@+id/log_in_progress"
@@ -31,7 +31,7 @@
             android:textAlignment="center"
             android:layout_marginLeft="16dp"
             android:layout_marginRight="16dp"
-            android:layout_marginBottom="100dp"
+            android:layout_marginBottom="30dp"
             />
 
         <TextView
@@ -43,6 +43,7 @@
             android:textSize="18sp"
             android:layout_marginLeft="16dp"
             android:layout_marginRight="16dp"
+            android:visibility="visible"
             />
     </LinearLayout>
 
@@ -52,6 +53,7 @@
         android:background="@android:color/transparent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:visibility="visible"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
 
@@ -69,26 +71,81 @@
         android:paddingBottom="10dp" />
     <!--android:textColor="@color/logout_text_color_state"-->
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/recording"
-        android:text="Start recording"
-        android:layout_centerInParent="true"
-        android:visibility="gone"/>
-    <!--android:onClick="RecordButton"-->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/reocordlayout"
+        android:visibility="gone"
+        android:orientation="vertical"
+        android:layout_marginTop="150dp"
+        android:layout_marginLeft="10dp">
+
+        <Button
+            android:id="@+id/startAudio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="start recording"
+            android:textColor="@android:color/white"/>
+
+        <Button
+            android:id="@+id/stopAudio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:layout_marginTop="5dp"
+            android:enabled="false"
+            android:text="stop recording"
+            android:textColor="@android:color/white"/>
+
+        <Button
+            android:id="@+id/playAudio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:enabled="false"
+            android:text="playing"
+            android:textColor="@android:color/white"/>
+
+        <Button
+            android:id="@+id/deleteAudio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:text="delete pcm"
+            android:textColor="@android:color/white"/>
+
+        <ScrollView
+            android:id="@+id/mScrollView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="5dp"
+            android:layout_weight="1">
+            <TextView
+                android:id="@+id/tv_audio_succeess"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="initializing...." />
+        </ScrollView>
+
+    </LinearLayout>
+
+    <!--<Button-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:id="@+id/recording"-->
+        <!--android:text="Start recording"-->
+        <!--android:layout_centerInParent="true"-->
+        <!--android:visibility="gone"/>-->
+    <!--&lt;!&ndash;android:onClick="RecordButton"&ndash;&gt;-->
 
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/playing"
-        android:text="Start playing"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:visibility="gone"/>
+    <!--<Button-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:id="@+id/playing"-->
+        <!--android:text="Start playing"-->
+        <!--android:layout_alignParentBottom="true"-->
+        <!--android:layout_centerHorizontal="true"-->
+        <!--android:visibility="gone"/>-->
     <!--android:onClick="PlayButton"/>-->
-
-
 
 </RelativeLayout>
