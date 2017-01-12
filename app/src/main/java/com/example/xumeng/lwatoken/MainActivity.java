@@ -1,8 +1,11 @@
 package com.example.xumeng.lwatoken;
 
 import android.app.Activity;
+import android.media.MediaPlayer;
+import android.media.MediaRecorder;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
@@ -26,6 +29,8 @@ import com.amazon.identity.auth.device.api.workflow.RequestContext;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+
 public class MainActivity extends Activity {
     private static final String Tag= MainActivity.class.getName();
 
@@ -43,6 +48,15 @@ public class MainActivity extends Activity {
     private ProgressBar loginProgress;
     private boolean isLoggedIn;
 
+    private static final String LOG_TAG = "AudioRecordTest";
+    private static String mFileName = null;
+    private MediaRecorder mRecorder = null;
+    private MediaPlayer mPlayer = null;
+    boolean mStartRecording = true;
+    boolean mStartPlaying = true;
+    private Button recordButton;
+    private Button playButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,6 +67,32 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         initializeUI();
 
+        recordButton = (Button) findViewById(R.id.recording);
+        playButton = (Button) findViewById(R.id.playing);
+        recordButton.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v){
+                onRecord(mStartRecording);
+                if (mStartRecording) {
+                    recordButton.setText("Stop recording");
+                } else {
+                    recordButton.setText("Start recording");
+                }
+                mStartRecording = !mStartRecording;
+            }
+
+        });
+
+        playButton.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v) {
+                onPlay(mStartPlaying);
+                if (mStartPlaying) {
+                    playButton.setText("Stop playing");
+                } else {
+                    playButton.setText("Start playing");
+                }
+                mStartPlaying = !mStartPlaying;
+            }
+        });
     }
 
     private void initializeUI(){
@@ -197,6 +237,8 @@ public class MainActivity extends Activity {
     private void setLoggedInState(){
         mLoginButton.setVisibility(Button.GONE);
         loggoutTextView.setVisibility(Button.VISIBLE);
+        recordButton.setVisibility(View.VISIBLE);
+        playButton.setVisibility(View.VISIBLE);
         isLoggedIn=true;
         setLoggingInState(false);
     }
@@ -207,6 +249,8 @@ public class MainActivity extends Activity {
     private void setLoggedOutState(){
         mLoginButton.setVisibility(Button.VISIBLE);
         loggoutTextView.setVisibility(Button.GONE);
+        recordButton.setVisibility(View.GONE);
+        playButton.setVisibility(View.GONE);
         isLoggedIn=false;
         resetTextCotent();
 
@@ -224,6 +268,8 @@ public class MainActivity extends Activity {
 //            setLoggedInButtonVisibility(Button.GONE);
             loginProgress.setVisibility(ProgressBar.VISIBLE);
             textContent.setVisibility(TextView.GONE);
+            recordButton.setVisibility(View.GONE);
+            playButton.setVisibility(View.GONE);
         }else{
             if(isLoggedIn){
                 loggoutTextView.setVisibility(Button.VISIBLE);
@@ -232,6 +278,8 @@ public class MainActivity extends Activity {
             }
             textContent.setVisibility(TextView.VISIBLE);
             loginProgress.setVisibility(ProgressBar.GONE);
+            recordButton.setVisibility(View.VISIBLE);
+            playButton.setVisibility(View.VISIBLE);
         }
     }
     public class TokenListener implements Listener<AuthorizeResult, AuthError> {
@@ -289,7 +337,6 @@ public class MainActivity extends Activity {
                     }.execute();
                 }
             });
-//            textContent.setText("access token");
 
         }
 
@@ -318,6 +365,82 @@ public class MainActivity extends Activity {
                     resetTextCotent();
                 }
             });
+        }
+    }
+
+
+    private void onRecord(boolean start) {
+        if (start) {
+            startRecording();
+        } else {
+            stopRecording();
+        }
+    }
+
+    private void onPlay(boolean start) {
+        if (start) {
+            startPlaying();
+        } else {
+            stopPlaying();
+        }
+    }
+
+    private void startPlaying() {
+        mPlayer = new MediaPlayer();
+        try {
+            mPlayer.setDataSource(mFileName);
+            mPlayer.prepare();
+            mPlayer.start();
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "prepare() failed");
+        }
+    }
+
+    private void stopPlaying() {
+        mPlayer.release();
+        mPlayer = null;
+    }
+
+
+    private void startRecording() {
+        mRecorder = new MediaRecorder();
+        mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        mRecorder.setOutputFile(mFileName);
+        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+
+        try {
+            mRecorder.prepare();
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "prepare() failed");
+        }
+
+        mRecorder.start();
+    }
+
+    private void stopRecording() {
+        mRecorder.stop();
+        mRecorder.release();
+        mRecorder = null;
+    }
+
+    public MainActivity() {
+        mFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
+        mFileName += "/audiorecordtest.wav";
+    }
+
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (mRecorder != null) {
+            mRecorder.release();
+            mRecorder = null;
+        }
+
+        if (mPlayer != null) {
+            mPlayer.release();
+            mPlayer = null;
         }
     }
 }
